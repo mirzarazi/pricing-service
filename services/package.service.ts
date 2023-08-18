@@ -1,4 +1,6 @@
+import { Transaction, Op } from 'sequelize';
 import { sequelizeConnection } from '../db/config'
+import { Municipality } from '../models/municipality';
 import {Package} from '../models/package';
 import { Price } from '../models/price';
 
@@ -10,12 +12,27 @@ export default {
 			],
 		});
   },
-  async updatePackagePrice(pack: Package, newPriceCents: number, municipalityName: string) {
+  async findMunicipalityByName(name:string, transaction: Transaction): Promise<Municipality | null> {
+    return Municipality.findOne({
+      where: {
+        name: {
+          [Op.iLike]: `%${name}%`
+        }
+      },
+      transaction
+    });
+  },
+  async updatePackagePrice(pack: Package, newPriceCents: number, municipalityName?: string) {
     try {
       const newPackage = await sequelizeConnection.transaction(async t => {
+        let municipality: Municipality | null = null;
+        if (municipalityName) {
+          municipality = await this.findMunicipalityByName(municipalityName, t);
+        }
         await Price.create({
           packageId: pack.id,
           priceCents: pack.priceCents,
+          ...municipality && {municipalityId: municipality.id}
         }, { transaction: t });
 
         pack.priceCents = newPriceCents;
