@@ -9,13 +9,14 @@ class Package extends Model<InferAttributes<Package>, InferCreationAttributes<Pa
 
 	declare id: CreationOptional<number>;
 	declare name: string;
+	declare municipality: string | null;
 	declare priceCents: number;
 	declare prices?: NonAttribute<Price[]>;
 }
 
 Package.init({
 	id: {
-		type: DataTypes.INTEGER.UNSIGNED,
+		type: DataTypes.INTEGER,
 		autoIncrement: true,
 		primaryKey: true,
 	},
@@ -29,6 +30,10 @@ Package.init({
 		allowNull: false,
 		defaultValue: 0,
 	},
+	municipality: {
+		type: DataTypes.STRING,
+		allowNull: true
+	}
 }, {
 	sequelize: sequelizeConnection,
 });

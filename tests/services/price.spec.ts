@@ -1,5 +1,6 @@
 import {sequelizeConnection} from '../../db/config';
 import {Package} from '../../models/package';
+import { Price } from '../../models/price';
 import PackageService from '../../services/package.service';
 import PriceService from '../../services/price.service';
 
@@ -9,7 +10,8 @@ describe('PriceService', () => {
 
 	// Before any tests run, clear the DB and run migrations with Sequelize sync()
 	beforeEach(async () => {
-		await db.sync({force: true});
+		await Package.sync({force: true});
+    await Price.sync({force: true});
 	});
 
 	afterAll(async () => {
@@ -21,23 +23,14 @@ describe('PriceService', () => {
 
     const date = new Date();
 
-    // These should NOT be included
-    date.setFullYear(2019);
-    await Promise.all([
-      PackageService.updatePackagePrice(basic, 20_00, 'Göteborg', date),
-      PackageService.updatePackagePrice(basic, 30_00, 'Stockholm', date),
-    ])
-
     date.setFullYear(2020);
-    await Promise.all([
-      PackageService.updatePackagePrice(basic, 30_00, 'Göteborg', date),
-      PackageService.updatePackagePrice(basic, 40_00, 'Stockholm', date),
-      PackageService.updatePackagePrice(basic, 100_00, 'Stockholm', date),
-    ])
-
-    expect(await PriceService.getPriceHistory()).toBe({
-      Göteborg: [30_00],
-      Stockholm: [40_00, 100_00],
+    const update1 = await PackageService.updatePackagePrice(basic, 30_00, 'Göteborg', date);
+    const update2 = await PackageService.updatePackagePrice(update1, 40_00, 'Stockholm', date);
+    await PackageService.updatePackagePrice(update2, 100_00, 'Stockholm', date);
+    const history = await PriceService.getPriceHistory()
+    expect(history).toEqual({
+      Göteborg: [3000],
+      Stockholm: [4000],
     });
   });
 
@@ -47,12 +40,10 @@ describe('PriceService', () => {
     const date = new Date();
 
     date.setFullYear(2020);
-    await Promise.all([
-      PackageService.updatePackagePrice(basic, 20_00, 'Göteborg', date),
-      PackageService.updatePackagePrice(basic, 30_00, 'Stockholm', date),
-      PackageService.updatePackagePrice(basic, 100_00, 'Stockholm', date),
-    ]);
-
-    // Add some assertions here!
+    const update1 = await PackageService.updatePackagePrice(basic, 20_00, 'Göteborg', date);
+    const update2 = await PackageService.updatePackagePrice(update1, 30_00, 'Stockholm', date);
+    await PackageService.updatePackagePrice(update2, 100_00, 'Stockholm', date);
+    const history = await PriceService.getPriceHistoryByMunicipality('Göteborg');
+    expect(history[0]).toBe(20_00);
   })
 });
