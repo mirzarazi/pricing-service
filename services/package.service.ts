@@ -10,7 +10,7 @@ export default {
 			],
 		});
   },
-  async updatePackagePrice(pack: Package, newPriceCents: number) {
+  async updatePackagePrice(pack: Package, newPriceCents: number, municipalityName: string) {
     try {
       const newPackage = await sequelizeConnection.transaction(async t => {
         await Price.create({
