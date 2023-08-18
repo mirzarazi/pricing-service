@@ -22,7 +22,7 @@ export default {
       transaction
     });
   },
-  async updatePackagePrice(pack: Package, newPriceCents: number, municipalityName?: string) {
+  async updatePackagePrice(pack: Package, newPriceCents: number, municipalityName?: string, date?: Date) {
     try {
       const newPackage = await sequelizeConnection.transaction(async t => {
         let municipality: Municipality | null = null;
@@ -32,7 +32,8 @@ export default {
         await Price.create({
           packageId: pack.id,
           priceCents: pack.priceCents,
-          ...municipality && {municipalityId: municipality.id}
+          ...municipality && {municipalityId: municipality.id},
+          ...date && {createdAt: date}
         }, { transaction: t });
 
         pack.priceCents = newPriceCents;
